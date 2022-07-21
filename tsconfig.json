@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"module": "CommonJS",
+		"target": "ESNext",
+		"moduleResolution": "Node",
+		"resolveJsonModule": true,
+		"allowJs": true,
+		"checkJs": false,
+		"strict": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"lib": [
+			"ESNext"
+		],
+		"typeRoots": [
+			"./node_modules/@types",
+			"./typings"
+		],
+		"noEmit": true,
+		"sourceMap": true
+	},
+	"exclude": [
+		"node_modules",
+		"output",
+		"old"
+	],
+	"typeAcquisition": {
+		"enable": true
+	}
+}
