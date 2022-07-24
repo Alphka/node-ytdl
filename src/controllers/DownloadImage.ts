@@ -1,5 +1,5 @@
 import type { Action } from "./Action/typings"
-import { rename, writeFile } from "fs/promises"
+import { rename, rm, writeFile } from "fs/promises"
 import { spawn } from "child_process"
 import { join } from "path"
 import axios from "axios"
@@ -50,7 +50,14 @@ export default async function DownloadImage(this: Action, audioPath: string, met
 			windowsHide: true,
 			stdio: "inherit"
 		})
-		.on("close", () => rename(audioTempPath, audioPath).then(resolve))
+		.on("close", async () => {
+			await Promise.all([
+				rm(imagePath),
+				rename(audioTempPath, audioPath)
+			])
+
+			resolve()
+		})
 		.on("error", command.error)
 	})
 }

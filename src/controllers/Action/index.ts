@@ -1,11 +1,11 @@
 import type { Options } from "../../../typings"
 import type { Command } from "commander"
-import { basename, extname, isAbsolute, join, normalize, parse, resolve } from "path"
-import { existsSync, mkdirSync, readdirSync } from "fs"
+import { extname, isAbsolute, join, normalize, parse, resolve } from "path"
 import { GetFFmpegPath, GetThreads, HandleError } from "../../helpers"
+import { existsSync, mkdirSync, readdirSync } from "fs"
 import { createInterface } from "readline"
+import { rename, rm } from "fs/promises"
 import { promisify } from "util"
-import { rename } from "fs/promises"
 import { spawn } from "child_process"
 import GetConfig, { Config } from "./GetConfig"
 import GetVideoDetails from "./GetVideoDetails"
@@ -94,6 +94,18 @@ class Action {
 			return error && HandleError(error, command)
 		}
 
+		async function OpenFinalPath(tempPath: string, finalPath: string){
+			const shouldRename = tempPath !== finalPath
+			const openFile = (path?: string) => exec(`start "" "${path ?? finalPath}"`)
+
+			try{
+				if(shouldRename) await rename(tempPath, finalPath)
+				await openFile(finalPath)
+			}catch(error){
+				await openFile(tempPath)
+			}
+		}
+
 		const artist = GetArtist(title, author.name)
 		const metadata = [
 			"-metadata", `title=${title}`,
@@ -110,13 +122,11 @@ class Action {
 			const filename = basename + extension
 			const finalPath = join(finalFolder, filename)
 			const tempPath = join(tempOutput, filename)
-			const shouldRename = tempPath !== finalPath
 			const ffmpegAttributes = [] as string[]
 
 			ffmpegAttributes.push("-i", videoPath)
-			if(audioPath) ffmpegAttributes.push("-i", audioPath)
 
-			if(audioPath) ffmpegAttributes.push("-c:a", "copy")
+			if(audioPath) ffmpegAttributes.push("-i", audioPath, "-c:a", "copy")
 			else ffmpegAttributes.push("-an")
 
 			if(extname(videoPath) === ".mkv") ffmpegAttributes.push(
@@ -135,8 +145,12 @@ class Action {
 				windowsHide: true,
 				stdio: "inherit"
 			}).on("close", async () => {
-				if(shouldRename) await rename(tempPath, finalPath)
-				await exec(`start "" "${finalPath}"`)
+				await Promise.all([
+					audioPath && rm(audioPath, { recursive: true }),
+					rm(videoPath, { recursive: true })
+				])
+
+				OpenFinalPath(tempPath, finalPath)
 			}).on("error", command.error)
 		})
 
@@ -144,12 +158,10 @@ class Action {
 		const { config: { extension } } = this
 		const filename = basename + extension
 		const finalPath = join(finalFolder, filename)
-		const openDir = () => exec(`start "" "${finalPath}"`)
 
 		if(hasImage){
 			await DownloadImage.call(this, audioPath, metadata)
-			await rename(audioPath, finalPath)
-			return await openDir()
+			return await OpenFinalPath(audioPath, finalPath)
 		}
 
 		const tempPath = join(tempOutput, filename)
@@ -162,8 +174,9 @@ class Action {
 			...metadata,
 			tempPath
 		]).on("close", async () => {
-			if(shouldRename) await rename(tempPath, finalPath)
-			await openDir()
+			await rm(audioPath, { recursive: true })
+
+			OpenFinalPath(tempPath, finalPath)
 		}).on("error", command.error)
 	}
 	private async GetVideoId(){
@@ -199,7 +212,7 @@ class Action {
 			let question: string
 			if(fileSameExt){
 				const type = this.config.isVideo ? "video" : "audio"
-				process.stdout.write(util.format("Seems like you already download this %s: %s\n", type, fileSameExt))
+				process.stdout.write(util.format("Seems like you already downloaded this %s: %s\n", type, fileSameExt))
 				question = "Do you want to replace the file?"
 			}else{
 				process.stdout.write("There is a file with the same name inside the output folder.\n")

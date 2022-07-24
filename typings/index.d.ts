@@ -16,6 +16,10 @@ export type Options<O extends boolean = boolean> = {
 	format?: VideoFormats | AudioFormats
 }
 
+export interface TempConfig {
+	failedToDelete: string[]
+}
+
 declare global {
 	namespace NodeJS {
 		interface ProcessEnv {
