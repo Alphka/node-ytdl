@@ -2,6 +2,7 @@ import type { Options } from "../typings"
 import type { Command } from "commander"
 import { version, name, description } from "../package.json"
 import { program } from "commander"
+import HandleError from "./helpers/HandleError"
 import Action from "./controllers/Action"
 import config from "./config"
 
@@ -14,7 +15,12 @@ export default class Index {
 
 		this.command.action((_arg: string, options: Options, command: Command) => {
 			const argument = command.args.join(" ")
-			new Action(argument, options, command)
+
+			try{
+				new Action(argument, options, command)
+			}catch(error){
+				HandleError(error, command)
+			}
 		}).parse(process.argv)
 	}
 	private AddOptions(){
@@ -48,7 +54,3 @@ export default class Index {
 }
 
 new Index()
-
-// * Fazer o código excluir o tmpDir antes de sair (mesmo se der erro)
-// * Terminar o código de baixar
-// * Tentar fazer o comando de seek

@@ -1,8 +1,9 @@
 import type { Options } from "../../../typings"
 import type { Command } from "commander"
-import { extname, isAbsolute, join, normalize, resolve } from "path"
-import { GetFFmpegPath, GetThreads } from "../../helpers"
-import { existsSync, mkdirSync } from "fs"
+import { basename, extname, isAbsolute, join, normalize, parse, resolve } from "path"
+import { existsSync, mkdirSync, readdirSync } from "fs"
+import { GetFFmpegPath, GetThreads, HandleError } from "../../helpers"
+import { createInterface } from "readline"
 import { promisify } from "util"
 import { rename } from "fs/promises"
 import { spawn } from "child_process"
@@ -15,14 +16,9 @@ import DownloadImage from "../DownloadImage"
 import GetArtist from "./GetArtist"
 import ytsearch from "youtube-search-api"
 import ytdl from "ytdl-core"
+import util from "util"
 
 const exec = promisify(require("child_process").exec as typeof import("child_process").exec)
-
-function HandleError(error: any, command: Command){
-	if(error instanceof Error) return command.error(error.message)
-	if(typeof error === "string") return command.error(error)
-	return command.error(new Error(String(error)).message)
-}
 
 function SetOutput(options: Options, command: Command): asserts options is Options<true> {
 	if(options.output){
@@ -91,6 +87,13 @@ class Action {
 
 		const finalFolder = tempOutput === output ? resolve(output, "..") : output
 		const basename = title.replace(/[<>:"\/\\\|\?\*]+/g, "_")
+
+		try{
+			await this.AnalyseFinalFolder(finalFolder, basename)
+		}catch(error){
+			return error && HandleError(error, command)
+		}
+
 		const artist = GetArtist(title, author.name)
 		const metadata = [
 			"-metadata", `title=${title}`,
@@ -184,6 +187,38 @@ class Action {
 			}
 		}catch(error){
 			HandleError(error, command)
+		}
+	}
+	private async AnalyseFinalFolder(folder: string, name: string){
+		const files = readdirSync(folder, { withFileTypes: true }).filter(file => file.isFile()).map(file => file.name)
+		const filesSameBase = files.filter(file => parse(file).name === name)
+
+		if(filesSameBase.length){
+			const fileSameExt = filesSameBase.find(file => file === name + this.config.extension)
+
+			let question: string
+			if(fileSameExt){
+				const type = this.config.isVideo ? "video" : "audio"
+				process.stdout.write(util.format("Seems like you already download this %s: %s\n", type, fileSameExt))
+				question = "Do you want to replace the file?"
+			}else{
+				process.stdout.write("There is a file with the same name inside the output folder.\n")
+				question = "Do you want to continue?"
+			}
+
+			const readline = createInterface({
+				input: process.stdin,
+				output: process.stdout
+			})
+
+			question = `${question} [y/n] (y) `
+
+			return new Promise<void>((resolve, reject) => {
+				readline.question(question, answer => {
+					/^no*$/.test(answer.trim()) ? reject() : resolve()
+					readline.close()
+				})
+			})
 		}
 	}
 }
