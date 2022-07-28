@@ -7,10 +7,9 @@ import sharp from "sharp"
 
 export default async function DownloadImage(this: Action, audioPath: string, metadata: string[]){
 	const { command, random, details: { thumbnails, video_url }, tempOutput: output } = this
-	const thumbnail = thumbnails.sort((a, b) => b.width - a.width)[0]
 	const imagePath = join(output, `image.${random}.png`)
 
-	const response = await axios.get<Buffer>(thumbnail.url, {
+	const response = await axios.get<Buffer>(thumbnails.at(-1)!.url, {
 		headers: {
 			Accept: "image/*",
 			"Accept-Encoding": "gzip, deflate, br",
@@ -20,9 +19,7 @@ export default async function DownloadImage(this: Action, audioPath: string, met
 		responseType: "arraybuffer"
 	})
 
-	const image = await sharp(response.data).toFormat("png").toBuffer()
-
-	await writeFile(imagePath, image)
+	await writeFile(imagePath, await sharp(response.data).toFormat("png").toBuffer())
 
 	return new Promise<void>(resolve => {
 		const { config: { audio: { format } }, ffmpegPath: ffmpeg }= this

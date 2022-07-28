@@ -1,8 +1,7 @@
 import ytdl from "ytdl-core"
 
 export default async function GetVideoDetails(videoId: string){
-	const videoInfo = await ytdl.getInfo(videoId)
-	const { videoDetails, formats } = videoInfo
+	const { videoDetails, formats } = await ytdl.getInfo(videoId)
 	const { title, author, thumbnails, video_url } = videoDetails
 
 	return {

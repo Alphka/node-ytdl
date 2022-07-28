@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const { mkdtempSync, existsSync, mkdirSync, readFileSync, readdirSync, rm, statSync } = require("fs")
+const { mkdtempSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } = require("fs")
+const { writeFile, rm, stat } = require("fs/promises")
 const { sep, join, resolve } = require("path")
 const { main, name } = require("../package.json")
 const { spawnSync } = require("child_process")
-const { writeFile, rm: rmPromise, stat } = require("fs/promises")
 const os = require("os")
 
 const osTemp = os.tmpdir()
@@ -32,7 +32,7 @@ const { signal } = spawnSync(process.argv0, [
 /**
  * @param {string} path
  * @param {object} [options]
- * @param {boolean=} options.empty Whether the directory must be empty\
+ * @param {boolean=} options.empty Whether the directory must be empty.\
  * Default: `false`
  * @param {boolean=} options.error Whether the function should throw an error.\
  * Default: `true`
@@ -40,24 +40,23 @@ const { signal } = spawnSync(process.argv0, [
 function DeleteFolder(path, options = {}){
 	options.error ??= true
 
-	if(options.empty){
-		const files = readdirSync(path)
-		if(files.length){
-			if(options.error) throw new Error(`Directory is not empty, rm '${path}'`)
-			return
-		}
+	if(options.empty && readdirSync(path).length){
+		if(options.error) throw new Error(`Directory is not empty, rm '${path}'`)
+		return
 	}
 
-	rm(path, { recursive: true }, error => {
-		if(error && options.error) throw error
-	})
+	try{
+		rmSync(path, { recursive: true })
+	}catch(error){
+		if(options.error) throw error
+	}
 }
 
-if(existsSync(temp)){
+if(existsSync(temp)) (async () => {
 	const config = join(temp, "config.json")
 
 	/** @type {import("../typings").TempConfig} */
-	let data
+	let data = {}
 	let empty = true
 
 	function SetConfig(){
@@ -70,13 +69,11 @@ if(existsSync(temp)){
 		try{
 			data = JSON.parse(readFileSync(config, "utf8"))
 		}catch(error){
-			data = {}
 			console.error(error)
 		}
 
 		if(data.failedToDelete?.length){
-			/** @type {number[]} */
-			const indexes = []
+			const indexes = /** @type {number[]} */ (new Array)
 			const promises = data.failedToDelete.map(async (path, index) => {
 				if(existsSync(path)){
 					const { ctime } = await stat(path)
@@ -84,21 +81,21 @@ if(existsSync(temp)){
 					// If the folder was created in less than 1 hour
 					// In case there is a video in the subfolder
 					if((new Date - ctime) / 1e3 / 3600 < 1) return
-					else await rmPromise(path, { recursive: true })
+
+					await rm(path, { recursive: true })
 				}
 
 				indexes.push(index)
 			})
 
-			Promise.allSettled(promises).then(results => {
-				let deleted = false
-
+			await Promise.allSettled(promises).then(results => {
 				if(indexes.length){
-					deleted = true
+					indexes.sort((a, b) => b - a)
 
-					for(const index of indexes.reverse()){
-						data.failedToDelete.splice(index, 1)
-					}
+					for(const index of indexes) data.failedToDelete.splice(index, 1)
+
+					if(data.failedToDelete.length) SetConfig()
+					else delete data.failedToDelete
 				}
 
 				results.forEach(result => {
@@ -114,30 +111,29 @@ if(existsSync(temp)){
 							console.error(error)
 						break
 					}
-				})
+				})}
+			)
+		}else delete data.failedToDelete
 
-				if(deleted) SetConfig()
-			})
+		if(!Object.keys(data).length){
+			rmSync(config)
+			empty = true
 		}
 	}
 
 	if(existsSync(output)){
-		let _empty = false
-
 		try{
 			DeleteFolder(output, { empty: true })
-			_empty = true
 		}catch(error){
+			empty = false
 			data.failedToDelete ??= []
 			data.failedToDelete.push(output)
 
 			SetConfig()
 		}
-
-		if(empty) empty = _empty
 	}
 
-	if(empty) DeleteFolder(temp, { empty: true })
+	if(empty) DeleteFolder(temp, { empty: true, error: false })
 
 	process.exitCode = signal
-}
+})()

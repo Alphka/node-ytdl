@@ -26,7 +26,7 @@ declare global {
 			APPDATA?: string
 			PATH?: string
 			CWD?: string
-			OUTPUT?: string
+			OUTPUT: string
 			YTDL_NO_UPDATE?: string
 		}
 	}

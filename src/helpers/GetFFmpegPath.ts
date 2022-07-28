@@ -15,7 +15,7 @@ function InstallFfmpeg(){
 		spawnSync(npm, ["i", "ffmpeg-static"], {
 			windowsHide: true,
 			stdio: "ignore",
-			cwd: resolve(__dirname, "..")
+			cwd: resolve(__dirname, "../..")
 		})
 	}
 }
