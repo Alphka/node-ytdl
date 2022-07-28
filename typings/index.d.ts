@@ -25,9 +25,8 @@ declare global {
 		interface ProcessEnv {
 			APPDATA?: string
 			PATH?: string
-
-			OUTPUT: string
-			TS_NODE_INSTALLED?: "true"
+			CWD?: string
+			OUTPUT?: string
 			YTDL_NO_UPDATE?: string
 		}
 	}

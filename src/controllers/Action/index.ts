@@ -21,22 +21,19 @@ import util from "util"
 const exec = promisify(require("child_process").exec as typeof import("child_process").exec)
 
 function SetOutput(options: Options, command: Command): asserts options is Options<true> {
+	if(!process.env.OUTPUT){
+		const output = resolve("../../../output")
+		mkdirSync(output, { recursive: true })
+
+		process.env.OUTPUT = output
+	}
+
 	if(options.output){
 		options.output = normalize(options.output)
 
-		if(!isAbsolute(options.output)) options.output = resolve(process.cwd(), options.output)
+		if(!isAbsolute(options.output)) options.output = resolve(process.env.CWD ?? process.cwd(), options.output)
 		if(!existsSync(options.output)) return command.error("Output directory doesn't exist")
-	}else{
-		if(!process.env.OUTPUT){
-			// throw new Error("Output is not defined in environment")
-
-			const output = resolve("../../../output")
-			process.env.OUTPUT = output
-			mkdirSync(output, { recursive: true })
-		}
-
-		options.output = process.env.OUTPUT
-	}
+	}else options.output = process.env.OUTPUT
 }
 
 class Action {
@@ -66,7 +63,7 @@ class Action {
 		this.command = command
 
 		this.output = options.output
-		this.tempOutput = process.env.OUTPUT
+		this.tempOutput = process.env.OUTPUT!
 
 		this.config = GetConfig(options)
 		this.threads = GetThreads(options.threads)
@@ -165,7 +162,6 @@ class Action {
 		}
 
 		const tempPath = join(tempOutput, filename)
-		const shouldRename = tempPath !== finalPath
 
 		spawn(ffmpeg, [
 			"-i", audioPath,

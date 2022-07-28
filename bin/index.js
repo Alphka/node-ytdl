@@ -23,6 +23,7 @@ const { signal } = spawnSync(process.argv0, [
 	stdio: "inherit",
 	cwd: resolve(__dirname, ".."),
 	env: Object.assign(process.env, {
+		CWD: process.cwd(),
 		OUTPUT: output,
 		YTDL_NO_UPDATE: "1"
 	})
