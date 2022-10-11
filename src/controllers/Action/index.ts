@@ -1,10 +1,10 @@
-import type { Options } from "../../../typings"
+import type { Options, TempConfig } from "../../../typings"
 import type { Command } from "commander"
 import { extname, isAbsolute, join, normalize, parse, resolve } from "path"
 import { GetFFmpegPath, GetThreads, HandleError } from "../../helpers"
 import { existsSync, mkdirSync, readdirSync } from "fs"
+import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
 import { createInterface } from "readline"
-import { rename, rm } from "fs/promises"
 import { promisify } from "util"
 import { spawn } from "child_process"
 import GetConfig, { Config } from "./GetConfig"
@@ -92,13 +92,31 @@ class Action {
 		}
 
 		async function OpenFinalPath(tempPath: string, finalPath: string){
-			const shouldRename = tempPath !== finalPath
 			const openFile = (path?: string) => exec(`start "" "${path ?? finalPath}"`)
 
 			try{
-				if(shouldRename) await rename(tempPath, finalPath)
+				if(tempPath !== finalPath) await rename(tempPath, finalPath)
 				await openFile(finalPath)
 			}catch(error){
+				(async () => {
+					const { TEMP_APP: TEMP, OUTPUT } = process.env
+					const config = join(TEMP, "config.json")
+
+					if(!OUTPUT) throw new Error("Output directory is not defined")
+					if(!TEMP) throw new Error("Temp directory is not defined")
+
+					let data: TempConfig
+
+					if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
+					if(!existsSync(config)) await writeFile(config, "{}", "utf8"), data = {}
+					else data = JSON.parse(await readFile(config, "utf8"))
+
+					data.cantDelete ??= []
+					data.cantDelete = data.cantDelete.concat(output)
+
+					await writeFile(config, JSON.stringify(data, null, "\t"), "utf8")
+				})().catch(console.error)
+
 				await openFile(tempPath)
 			}
 		}

@@ -17,7 +17,8 @@ export type Options<O extends boolean = boolean> = {
 }
 
 export interface TempConfig {
-	failedToDelete: string[]
+	failedToDelete?: string[]
+	cantDelete?: string[]
 }
 
 declare global {
@@ -26,6 +27,7 @@ declare global {
 			APPDATA?: string
 			PATH?: string
 			CWD?: string
+			TEMP_APP: string
 			OUTPUT: string
 			YTDL_NO_UPDATE?: string
 		}

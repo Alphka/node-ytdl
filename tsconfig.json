@@ -20,9 +20,7 @@
 		"sourceMap": true
 	},
 	"exclude": [
-		"node_modules",
-		"output",
-		"old"
+		"node_modules"
 	],
 	"typeAcquisition": {
 		"enable": true

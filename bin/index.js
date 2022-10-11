@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { mkdtempSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } = require("fs")
-const { writeFile, rm, stat } = require("fs/promises")
+const { writeFile, rm, stat, readdir } = require("fs/promises")
 const { sep, join, resolve } = require("path")
 const { main, name } = require("../package.json")
 const { spawnSync } = require("child_process")
@@ -24,6 +24,7 @@ const { signal } = spawnSync(process.argv0, [
 	cwd: resolve(__dirname, ".."),
 	env: Object.assign(process.env, {
 		CWD: process.cwd(),
+		TEMP_APP: temp,
 		OUTPUT: output,
 		YTDL_NO_UPDATE: "1"
 	})
@@ -94,8 +95,9 @@ if(existsSync(temp)) (async () => {
 
 					for(const index of indexes) data.failedToDelete.splice(index, 1)
 
-					if(data.failedToDelete.length) SetConfig()
-					else delete data.failedToDelete
+					if(!data.failedToDelete.length) delete data.failedToDelete
+
+					SetConfig()
 				}
 
 				results.forEach(result => {
@@ -123,7 +125,39 @@ if(existsSync(temp)) (async () => {
 
 	if(existsSync(output)){
 		try{
-			DeleteFolder(output, { empty: true })
+			const cantDeleteIndex = data.cantDelete?.indexOf(output)
+
+			if(typeof cantDeleteIndex === "number"){
+				empty = false
+
+				/** @type {number[]} */
+				const indexes = []
+
+				data.cantDelete.forEach(async (directory, index) => {
+					if(index === cantDeleteIndex) return
+
+					if(existsSync(directory)){
+						if(!(await readdir(directory)).length) return await rm(directory, { recursive: true })
+
+						const { ctime } = await stat(directory)
+
+						// If the folder was created in less than 1 hour
+						if((new Date - ctime) / 1e3 / 3600 < 1) return console.log("Less than 1 hour", directory)
+						else console.log("more than 1 hour", directory)
+
+						await rm(directory, { recursive: true })
+					}
+				})
+
+				if(indexes.length){
+					indexes.sort((a, b) => b - a)
+					for(const index of indexes) data.cantDelete.splice(index, 1)
+				}
+
+				if(!data.cantDelete.length) delete data.cantDelete
+
+				SetConfig()
+			}else DeleteFolder(output, { empty: true })
 		}catch(error){
 			empty = false
 			data.failedToDelete ??= []
