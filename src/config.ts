@@ -37,6 +37,11 @@ const config = {
 			syntax: "[path]"
 		},
 		{
+			alternative: "y",
+			description: "Overwrite file",
+			defaultValue: false
+		},
+		{
 			option: "threads",
 			alternative: "th",
 			description: "Max CPU threads to be used",

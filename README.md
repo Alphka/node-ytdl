@@ -35,6 +35,7 @@ Options:
   -pn, --nopic                                  Downloads the audio without album art (default: false)
   -f, --format [mp4 | webm | mp3 | aac | opus]  Output format
   -o, --output [path]                           Output directory
+  -y                                            Overwrite file (default: false)
   -th, --threads [number]                       Max CPU threads to be used
   -h, --help                                    Display help
 ```

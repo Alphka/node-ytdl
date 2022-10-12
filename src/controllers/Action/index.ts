@@ -88,7 +88,8 @@ class Action {
 		try{
 			await this.AnalyseFinalFolder(finalFolder, basename)
 		}catch(error){
-			return error && HandleError(error, command)
+			if(error) HandleError(error, command)
+			return
 		}
 
 		async function OpenFinalPath(tempPath: string, finalPath: string){
@@ -226,24 +227,28 @@ class Action {
 			let question: string
 			if(fileSameExt){
 				const type = this.config.isVideo ? "video" : "audio"
-				process.stdout.write(util.format("Seems like you already downloaded this %s: %s\n", type, fileSameExt))
+				console.log("Seems like you already downloaded this %s: %s", type, fileSameExt)
 				question = "Do you want to replace the file?"
 			}else{
-				process.stdout.write("There is a file with the same name inside the output folder.\n")
+				console.log("There is a file with the same name inside the output folder.")
 				question = "Do you want to continue?"
 			}
 
-			const readline = createInterface({
-				input: process.stdin,
-				output: process.stdout
-			})
-
-			question = `${question} [y/n] (y) `
-
 			return new Promise<void>((resolve, reject) => {
+				if(this.options.y) return resolve()
+
+				const readline = createInterface({
+					input: process.stdin,
+					output: process.stdout
+				})
+
+				question = `${question} [y/n] `
+
 				readline.question(question, answer => {
-					/^no*$/.test(answer.trim()) ? reject() : resolve()
 					readline.close()
+
+					if(/\bno*\b/.test(answer)) reject()
+					else resolve()
 				})
 			})
 		}

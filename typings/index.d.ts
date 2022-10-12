@@ -14,6 +14,8 @@ export type Options<O extends boolean = boolean> = {
 	output: If<O, string>
 	threads: string | number
 	format?: VideoFormats | AudioFormats
+	/** Ovewrite file */
+	y: boolean
 }
 
 export interface TempConfig {
