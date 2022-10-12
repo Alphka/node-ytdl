@@ -105,10 +105,10 @@ class Action {
 					if(!OUTPUT) throw new Error("Output directory is not defined")
 					if(!TEMP) throw new Error("Temp directory is not defined")
 
-					let data: TempConfig
+					let data: TempConfig = {}
 
 					if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
-					if(!existsSync(config)) await writeFile(config, "{}", "utf8"), data = {}
+					if(!existsSync(config)) await writeFile(config, "{}", "utf8")
 					else data = JSON.parse(await readFile(config, "utf8"))
 
 					data.cantDelete ??= []
