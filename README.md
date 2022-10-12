@@ -2,6 +2,7 @@
 
 ### Description
 A youtube downloader that uses ytdl-core and ffmpeg.
+Both video and audio are downloaded using the highest quality available
 
 <hr>
 
