@@ -16,6 +16,8 @@ export type Options<O extends boolean = boolean> = {
 	format?: VideoFormats | AudioFormats
 	/** Ovewrite file */
 	y: boolean
+	/** Open file when finished */
+	open: boolean
 }
 
 export interface TempConfig {

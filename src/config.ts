@@ -47,6 +47,12 @@ const config = {
 			description: "Max CPU threads to be used",
 			defaultValue: GetThreads(),
 			syntax: "[number]"
+		},
+		{
+			option: "open",
+			alternative: "O",
+			description: "Open file when finished",
+			defaultValue: false
 		}
 	]
 }

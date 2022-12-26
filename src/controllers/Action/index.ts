@@ -5,8 +5,7 @@ import { GetFFmpegPath, GetThreads, HandleError } from "../../helpers"
 import { existsSync, mkdirSync, readdirSync } from "fs"
 import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
 import { createInterface } from "readline"
-import { promisify } from "util"
-import { spawn } from "child_process"
+import { spawn, exec } from "child_process"
 import GetConfig, { Config } from "./GetConfig"
 import GetVideoDetails from "./GetVideoDetails"
 import AnalyseOptions from "./AnalyseOptions"
@@ -16,9 +15,6 @@ import DownloadImage from "../DownloadImage"
 import GetArtist from "./GetArtist"
 import ytsearch from "youtube-search-api"
 import ytdl from "ytdl-core"
-import util from "util"
-
-const exec = promisify(require("child_process").exec as typeof import("child_process").exec)
 
 function SetOutput(options: Options, command: Command): asserts options is Options<true> {
 	if(!process.env.OUTPUT){
@@ -92,34 +88,35 @@ class Action {
 			return
 		}
 
-		async function OpenFinalPath(tempPath: string, finalPath: string){
-			const openFile = (path?: string) => exec(`start "" "${path ?? finalPath}"`)
+		const OpenFinalPath = (tempPath: string, finalPath: string) => {
+			const { open } = this.options
 
-			try{
-				if(tempPath !== finalPath) await rename(tempPath, finalPath)
-				await openFile(finalPath)
-			}catch(error){
-				(async () => {
-					const { TEMP_APP: TEMP, OUTPUT } = process.env
-					const config = join(TEMP, "config.json")
-
-					if(!OUTPUT) throw new Error("Output directory is not defined")
-					if(!TEMP) throw new Error("Temp directory is not defined")
-
-					let data: TempConfig = {}
-
-					if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
-					if(!existsSync(config)) await writeFile(config, "{}", "utf8")
-					else data = JSON.parse(await readFile(config, "utf8"))
-
-					data.cantDelete ??= []
-					data.cantDelete = data.cantDelete.concat(output)
-
-					await writeFile(config, JSON.stringify(data, null, "\t"), "utf8")
-				})().catch(console.error)
-
-				await openFile(tempPath)
+			const OpenFile = (path?: string) => {
+				if(open) exec(`start "" "${path ?? finalPath}"`)
 			}
+
+			if(tempPath !== finalPath) rename(tempPath, finalPath).catch(async error => {
+				console.error(error)
+
+				const { TEMP_APP: TEMP, OUTPUT } = process.env
+				const config = join(TEMP, "config.json")
+
+				if(!OUTPUT) throw new Error("Output directory is not defined")
+				if(!TEMP) throw new Error("Temp directory is not defined")
+
+				let data: TempConfig = {}
+
+				if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
+				if(!existsSync(config)) await writeFile(config, "{}", "utf8")
+				else data = JSON.parse(await readFile(config, "utf8"))
+
+				data.cantDelete ??= []
+				data.cantDelete = data.cantDelete.concat(output)
+
+				await writeFile(config, JSON.stringify(data, null, "\t"), "utf8")
+			})
+			.catch(console.error)
+			.finally(() => OpenFile(finalPath))
 		}
 
 		const artist = GetArtist(title, author.name)
@@ -177,7 +174,7 @@ class Action {
 
 		if(hasImage){
 			await DownloadImage.call(this, audioPath, metadata)
-			return await OpenFinalPath(audioPath, finalPath)
+			return OpenFinalPath(audioPath, finalPath)
 		}
 
 		const tempPath = join(tempOutput, filename)
@@ -190,7 +187,6 @@ class Action {
 			tempPath
 		]).on("close", async () => {
 			await rm(audioPath, { recursive: true })
-
 			OpenFinalPath(tempPath, finalPath)
 		}).on("error", command.error)
 	}
