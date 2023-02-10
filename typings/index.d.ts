@@ -17,7 +17,8 @@ export type Options<O extends boolean = boolean> = {
 	/** Ovewrite file */
 	y: boolean
 	/** Open file when finished */
-	open: boolean
+	open: boolean,
+	resolution?: `${number}p`
 }
 
 export interface TempConfig {

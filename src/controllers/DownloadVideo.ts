@@ -1,5 +1,5 @@
 import type { Action, Video } from "./Action/typings"
-import type { Writable } from "stream"
+import type { Writable, Readable } from "stream"
 import { createWriteStream } from "fs"
 import { spawn } from "child_process"
 import { join } from "path"
@@ -24,28 +24,59 @@ function GetVideoFormats(formats: videoFormat[]){
 	return videoFormats.sort((a, b) => b.width - a.width)
 }
 
+function CompareResolutions(a: string, b: string){
+	return a.substring(0, a.indexOf("p")) === b.substring(0, b.indexOf("p"))
+}
+
 export default async function DownloadVideo(this: Action){
-	const { random, details: { formats }, config, videoId, tempOutput: output } = this
+	const { random, details: { formats }, config, videoId, options: { resolution }, tempOutput: output } = this
 	const { format, extension } = config.video as Video<true>
 	const videoFormats = GetVideoFormats(formats)
 	const containerFormats = videoFormats.filter(({ container }) => container === format)
 	const hasFormat = Boolean(containerFormats.length)
 	const videoFormat = hasFormat ? containerFormats[0] : videoFormats[0]
-	const video = ytdl(videoId, { format: videoFormat })
 
-	if(hasFormat) return await new Promise<string>((resolve, reject) => {
-		const videoPath = join(output, `video.${random + extension}`)
-		const fileStream = createWriteStream(videoPath)
+	if(hasFormat){
+		let video: Readable
 
-		video.pipe(fileStream)
-		video.on("end", () => resolve(videoPath))
-		video.on("error", reject)
-	})
+		if(resolution){
+			const containerFormat = containerFormats.find(({ qualityLabel }) => CompareResolutions(qualityLabel, resolution))
+			const resolutionFormat = containerFormat || videoFormats.find(({ qualityLabel }) => CompareResolutions(qualityLabel, resolution))
+
+			if(containerFormat) video = ytdl(videoId, { format: containerFormat })
+			else if(resolutionFormat) video = ytdl(videoId, { format: resolutionFormat })
+			else console.log("Resolution '%s' not found", resolution)
+		}
+
+		video ??= ytdl(videoId, { format: videoFormat })
+
+		return await new Promise<string>((resolve, reject) => {
+			const videoPath = join(output, `video.${random + extension}`)
+			const fileStream = createWriteStream(videoPath)
+
+			video.pipe(fileStream)
+			video.on("end", () => resolve(videoPath))
+			video.on("error", reject)
+		})
+	}
 
 	return await new Promise<string>((resolve, reject) => {
 		const { options, threads, ffmpegPath: ffmpeg } = this
 		const videoPath = join(output, `video.${random}.mkv`)
 		const fileStream = createWriteStream(videoPath)
+
+		function GetFormat(){
+			if(resolution){
+				const resolutionFormat = videoFormats.find(({ qualityLabel }) => CompareResolutions(qualityLabel, resolution))
+
+				if(resolutionFormat) return resolutionFormat
+				else console.log("Resolution '%s' not found", resolution)
+			}
+
+			return videoFormat
+		}
+
+		const video = ytdl(videoId, { format: GetFormat() })
 
 		this.config = GetConfig(Object.assign(options, { format: "mp4" }))
 

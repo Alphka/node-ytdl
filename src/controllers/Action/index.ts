@@ -64,6 +64,8 @@ class Action {
 		this.config = GetConfig(options)
 		this.threads = GetThreads(options.threads)
 
+		this.VerifyResolution(options.resolution)
+
 		this.GetVideoId()
 			.then(async () => this.details = await GetVideoDetails(this.videoId))
 			.then(() => this.Init())
@@ -88,35 +90,42 @@ class Action {
 			return
 		}
 
-		const OpenFinalPath = (tempPath: string, finalPath: string) => {
+		const OpenFinalPath = async (tempPath: string, finalPath: string) => {
 			const { open } = this.options
 
 			const OpenFile = (path?: string) => {
 				if(open) exec(`start "" "${path ?? finalPath}"`)
 			}
 
-			if(tempPath !== finalPath) rename(tempPath, finalPath).catch(async error => {
-				console.error(error)
+			if(tempPath !== finalPath){
+				try{
+					await rename(tempPath, finalPath)
+					OpenFile(finalPath)
+				}catch(error){
+					console.error(error)
 
-				const { TEMP_APP: TEMP, OUTPUT } = process.env
-				const config = join(TEMP, "config.json")
+					try{
+						const { TEMP_APP: TEMP, OUTPUT } = process.env
+						const config = join(TEMP, "config.json")
 
-				if(!OUTPUT) throw new Error("Output directory is not defined")
-				if(!TEMP) throw new Error("Temp directory is not defined")
+						if(!OUTPUT) throw new Error("Output directory is not defined")
+						if(!TEMP) throw new Error("Temp directory is not defined")
 
-				let data: TempConfig = {}
+						let data: TempConfig = {}
 
-				if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
-				if(!existsSync(config)) await writeFile(config, "{}", "utf8")
-				else data = JSON.parse(await readFile(config, "utf8"))
+						if(!existsSync(TEMP)) await mkdir(config, { recursive: true })
+						if(!existsSync(config)) await writeFile(config, "{}", "utf8")
+						else data = JSON.parse(await readFile(config, "utf8"))
 
-				data.cantDelete ??= []
-				data.cantDelete = data.cantDelete.concat(output)
+						data.cantDelete ??= []
+						data.cantDelete = data.cantDelete.concat(output)
 
-				await writeFile(config, JSON.stringify(data, null, "\t"), "utf8")
-			})
-			.catch(console.error)
-			.finally(() => OpenFile(finalPath))
+						await writeFile(config, JSON.stringify(data, null, "\t"), "utf8")
+					}catch(error){
+						console.error(error)
+					}
+				}
+			}
 		}
 
 		const artist = GetArtist(title, author.name)
@@ -157,7 +166,7 @@ class Action {
 			], {
 				windowsHide: true,
 				stdio: "inherit"
-			}).on("close", async () => {
+			}).on("exit", async () => {
 				await Promise.all([
 					audioPath && rm(audioPath, { recursive: true }),
 					rm(videoPath, { recursive: true })
@@ -212,6 +221,25 @@ class Action {
 		}catch(error){
 			HandleError(error, command)
 		}
+	}
+	private VerifyResolution<T extends string>(resolution: T | undefined): asserts resolution is T
+	private VerifyResolution(resolution: string | undefined): asserts resolution is string
+	private VerifyResolution(resolution: string | undefined){
+		if(typeof resolution === "undefined") return
+
+		const allowedResolutions = [
+			"4320p",
+			"2160p",
+			"1440p",
+			"1080p",
+			"720p",
+			"480p",
+			"360p",
+			"240p",
+			"144p"
+		]
+
+		if(!allowedResolutions.includes(resolution)) throw "Invalid resolution"
 	}
 	private async AnalyseFinalFolder(folder: string, name: string){
 		const files = readdirSync(folder, { withFileTypes: true }).filter(file => file.isFile()).map(file => file.name)

@@ -37,6 +37,8 @@ Options:
   -o, --output [path]                           Output directory
   -y                                            Overwrite file (default: false)
   -th, --threads [number]                       Max CPU threads to be used
+  -O, --open                                    Open file when finished (default: false)
+  -r, --resolution <res>                        Choose video's resolution
   -h, --help                                    Display help
 ```
 

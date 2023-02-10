@@ -53,6 +53,12 @@ const config = {
 			alternative: "O",
 			description: "Open file when finished",
 			defaultValue: false
+		},
+		{
+			option: "resolution",
+			alternative: "r",
+			description: "Choose video's resolution",
+			syntax: "<res>"
 		}
 	]
 }
