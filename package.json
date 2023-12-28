@@ -1,15 +1,14 @@
 {
 	"author": "Alphka",
 	"name": "node-ytdl",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "Download and convert YouTube videos using ytdl-core and ffmpeg",
 	"main": "src/index.ts",
 	"scripts": {
 		"start": "ts-node ."
 	},
 	"devDependencies": {
-		"@types/node": "20.x",
-		"@types/sharp": ">=0.31.1 <0.33"
+		"@types/node": "20.x"
 	},
 	"dependencies": {
 		"axios": "~1.6.3",

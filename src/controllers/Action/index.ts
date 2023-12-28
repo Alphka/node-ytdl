@@ -58,7 +58,7 @@ class Action {
 		this.options = options
 		this.command = command
 
-		this.output = options.output
+		this.output = options.output!
 		this.tempOutput = process.env.OUTPUT!
 
 		this.config = GetConfig(options)
