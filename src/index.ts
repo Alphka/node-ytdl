@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import type { Options } from "../typings"
 import type { Command } from "commander"
 import { version, name, description } from "../package.json"
