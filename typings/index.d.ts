@@ -1,11 +1,11 @@
-export type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B
+type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B
 
-export type VideoExtensions = ".mp4" | ".webm"
-export type AudioExtensions = ".mp3" | ".m4a" | ".webm" | ".opus"
-export type VideoFormats = "webm" | "mp4"
-export type AudioFormats = "mp3" | "aac" | "opus"
+type VideoExtensions = ".mp4" | ".webm"
+type AudioExtensions = ".mp3" | ".m4a" | ".webm" | ".opus"
+type VideoFormats = "webm" | "mp4"
+type AudioFormats = "mp3" | "aac" | "opus"
 
-export type Options<O extends boolean = boolean> = {
+type Options<O extends boolean = boolean> = {
 	novideo: boolean
 	noaudio: boolean
 	nopic: boolean
@@ -21,20 +21,17 @@ export type Options<O extends boolean = boolean> = {
 	resolution?: `${number}p`
 }
 
-export interface TempConfig {
+interface TempConfig {
 	failedToDelete?: string[]
 	cantDelete?: string[]
 }
 
-declare global {
-	namespace NodeJS {
-		interface ProcessEnv {
-			APPDATA?: string
-			PATH?: string
-			CWD?: string
-			TEMP_APP: string
-			OUTPUT: string
-			YTDL_NO_UPDATE?: string
-		}
-	}
+type Video<T extends boolean = true> = {
+	format: If<T, VideoFormats, null>
+	extension: If<T, VideoExtensions, null>
+}
+
+interface Audio<T extends boolean = true> {
+	format: If<T, AudioFormats, null>
+	extension: If<T, AudioExtensions, null>
 }

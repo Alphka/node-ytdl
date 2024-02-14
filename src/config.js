@@ -1,4 +1,4 @@
-import { GetThreads } from "./helpers"
+import GetThreads from "./helpers/GetThreads.js"
 
 const config = {
 	argument: {
