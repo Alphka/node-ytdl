@@ -1,6 +1,6 @@
 import { createWriteStream, existsSync, readdirSync } from "fs"
 import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
-import { extname, join, parse, resolve } from "path"
+import { extname, join, parse } from "path"
 import { createInterface } from "readline"
 import { spawn, exec } from "child_process"
 import { Command } from "commander"
@@ -135,7 +135,8 @@ export default class Downloader {
 		}
 	}
 	async Init(){
-		this.ffmpegPath = await GetFFmpegPath()
+		const ffmpegInstallation = GetFFmpegPath().then(path => this.ffmpegPath = path)
+
 		this.videoId = await this.GetVideoId()
 		this.details = await this.GetVideoDetails(this.videoId)
 
@@ -143,8 +144,7 @@ export default class Downloader {
 			program: command,
 			details: { title, author, video_url },
 			config: { isVideo, hasAudio, hasImage },
-			tempOutput, output,
-			ffmpegPath
+			tempOutput, output
 		} = this
 
 		const finalFolder = output === tempOutput ? join(output, "..") : output
@@ -166,11 +166,13 @@ export default class Downloader {
 			"-metadata", `comment=${video_url}`
 		]
 
+		await ffmpegInstallation
+
 		if(isVideo) return await Promise.all([
 			this.DownloadVideo(),
 			hasAudio && this.DownloadAudio()
 		]).then(([videoPath, audioPath]) => {
-			const { config: { extension }, threads } = this
+			const { config: { extension }, threads, ffmpegPath } = this
 			const filename = basename + extension
 			const finalPath = join(finalFolder, filename)
 			const tempPath = join(tempOutput, filename)
@@ -178,8 +180,12 @@ export default class Downloader {
 
 			ffmpegAttributes.push("-i", videoPath)
 
-			if(audioPath) ffmpegAttributes.push("-i", audioPath, "-c:a", "copy")
-			else ffmpegAttributes.push("-an")
+			if(audioPath){
+				ffmpegAttributes.push(
+					"-i", audioPath,
+					"-c:a", "copy"
+				)
+			}else ffmpegAttributes.push("-an")
 
 			if(extname(videoPath) === ".mkv") ffmpegAttributes.push(
 				"-c:v", "libx264",
@@ -203,18 +209,18 @@ export default class Downloader {
 					rm(videoPath, { recursive: true })
 				])
 
-				this.OpenFinalPath(tempPath, finalPath)
+				this.MoveAndOpenFinalPath(tempPath, finalPath)
 			}).on("error", command.error)
 		})
 
 		const audioPath = await this.DownloadAudio()
-		const { extension } = this.config
+		const { config: { extension }, ffmpegPath } = this
 		const filename = basename + extension
 		const finalPath = join(finalFolder, filename)
 
 		if(hasImage){
 			await this.DownloadImage(audioPath, metadata)
-			return this.OpenFinalPath(audioPath, finalPath)
+			return this.MoveAndOpenFinalPath(audioPath, finalPath)
 		}
 
 		const tempPath = join(tempOutput, filename)
@@ -228,11 +234,11 @@ export default class Downloader {
 		]).on("close", async () => {
 			// TODO: Ignore
 			await rm(audioPath, { recursive: true })
-			this.OpenFinalPath(tempPath, finalPath)
+			this.MoveAndOpenFinalPath(tempPath, finalPath)
 		}).on("error", command.error)
 	}
 	async GetVideoId(){
-		const { argument, program } = this
+		const { argument } = this
 
 		if(/https?:\/\//i.test(argument)){
 			const videoId = ytdl.getURLVideoID(argument)
@@ -467,7 +473,7 @@ export default class Downloader {
 	 * @param {string} tempPath
 	 * @param {string} finalPath
 	 */
-	async OpenFinalPath(tempPath, finalPath){
+	async MoveAndOpenFinalPath(tempPath, finalPath){
 		const { open } = this.options
 
 		/** @param {string} [path] */

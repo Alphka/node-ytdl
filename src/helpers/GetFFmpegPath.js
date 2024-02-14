@@ -2,13 +2,9 @@ import { join, extname, parse, resolve } from "path"
 import { existsSync, readdirSync } from "fs"
 import InstallFFmpeg from "./InstallFFmpeg.js"
 
-/** @type {string} */
-let ffmpegPath
-
 // TODO: Verify by shell
+/** @returns {Promise<string>} */
 export default async function GetFFmpegPath(){
-	if(ffmpegPath) return ffmpegPath
-
 	if(process.env.PATH){
 		const directories = process.env.PATH.split(";").filter(dir => dir && existsSync(dir))
 
@@ -20,11 +16,16 @@ export default async function GetFFmpegPath(){
 				.filter(file => file.isFile() && extname(file.name).length > 1)
 				.map(file => join(directory, file.name))
 
-			for(const file of files) if(parse(file).name === "ffmpeg") return ffmpegPath = file
+			for(const file of files) if(parse(file).name === "ffmpeg") return file
 		}
 	}
 
-	InstallFFmpeg()
+	await InstallFFmpeg()
 
-	return ffmpegPath = (await import("ffmpeg-static")).default
+	// @ts-expect-error
+	const ffmpegExecutable = /** @type {import("ffmpeg-static")} */ (await import("ffmpeg-static")).default
+
+	if(ffmpegExecutable) return ffmpegExecutable
+
+	throw "ffmpeg-static installation failed"
 }
