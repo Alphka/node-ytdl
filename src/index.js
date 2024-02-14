@@ -2,7 +2,7 @@
 
 import "@total-typescript/ts-reset"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs"
-import { dirname, isAbsolute, join, normalize, resolve, sep } from "path"
+import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from "path"
 import { rm, writeFile, stat } from "fs/promises"
 import { fileURLToPath } from "url"
 import { Command } from "commander"
@@ -15,11 +15,41 @@ import os from "os"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const root = join(__dirname, "..")
+const cwd = process.cwd()
+
+/**
+ * @link https://github.com/Alphka/Instagram-Downloader/commit/5e4df9a4689d15b528c90e1bfec318910a60ca26#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556R23
+ * @param {string | undefined} directory
+ * @param {boolean} force
+ */
+function GetOutputDirectory(directory, force){
+	if(!directory) return GetOutputDirectory(cwd, force)
+
+	const path = directory === cwd ? cwd : resolve(cwd, directory)
+	const relativePath = relative(root, path)
+
+	// If doesn't start with ".." and isn't on another disk
+	const isSubdir = !relativePath.startsWith("..") && !isAbsolute(relativePath)
+
+	if(path === root || isSubdir){
+		const path = join(root, "output")
+		if(!existsSync(path)) mkdirSync(path)
+		return path
+	}
+
+	if(!existsSync(path)){
+		if(!force) throw "Output directory doesn't exist. Use the --forceDir flag to ignore this message"
+		mkdirSync(path, { recursive: true })
+	}
+
+	return path
+}
 
 const program = new Command()
 	.name(Package.name)
-	.version(Package.version)
 	.description(Package.description)
+	.version(Package.version, "-v, --version", "Display program version")
+	.helpOption("-h, --help", "Display help")
 	.argument(config.argument.name, config.argument.description)
 	.action(
 		/**
@@ -40,12 +70,7 @@ const program = new Command()
 		process.env.YTDL_NO_UPDATE = "1"
 
 		try{
-			if(options.output){
-				options.output = normalize(options.output)
-
-				if(!isAbsolute(options.output)) options.output = resolve(process.cwd(), options.output)
-				if(!existsSync(options.output)) throw "Output directory doesn't exist"
-			}else options.output = process.env.OUTPUT
+			options.output = GetOutputDirectory(options.output, options.forceDir)
 
 			if(options.novideo && options.noaudio) throw "Conflict: both 'novideo' and 'noaudio' was used"
 
@@ -86,6 +111,8 @@ const program = new Command()
 		}catch(error){
 			if(typeof error === "string") console.error(chalk.red(error))
 			else console.error(error)
+
+			process.exitCode = 1
 		}finally{
 			/**
 			 * @param {string} path

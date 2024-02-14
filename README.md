@@ -29,13 +29,14 @@ Arguments:
   string                                        Video's url or search
 
 Options:
-  -V, --version                                 Display program version
+  -v, --version                                 Display program version
   -vn, --novideo                                Only downloads audio (default: false)
   -an, --noaudio                                Removes the audio from the video (default: false)
   -pn, --nopic                                  Downloads the audio without album art (default: false)
   -f, --format [mp4 | webm | mp3 | aac | opus]  Output format
   -o, --output [path]                           Output directory
   -y                                            Overwrite file (default: false)
+  --forceDir                                    Force output directory creation (default: false)
   -th, --threads [number]                       Max CPU threads to be used
   -O, --open                                    Open file when finished (default: false)
   -r, --resolution <res>                        Choose video's resolution

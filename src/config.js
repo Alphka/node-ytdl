@@ -1,5 +1,18 @@
 import GetThreads from "./helpers/GetThreads.js"
 
+/** @type {{
+  argument: {
+    name: string
+    description: string
+  }
+  options: {
+    option?: string
+    alternative?: string
+    description: string
+    defaultValue?: string | number | boolean
+    syntax?: string
+  }[]
+}} */
 const config = {
 	argument: {
 		name: "<string>",
@@ -39,6 +52,11 @@ const config = {
 		{
 			alternative: "y",
 			description: "Overwrite file",
+			defaultValue: false
+		},
+		{
+			option: "forceDir",
+			description: "Force output directory creation",
 			defaultValue: false
 		},
 		{

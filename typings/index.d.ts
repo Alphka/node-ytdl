@@ -11,13 +11,15 @@ type Options<O extends boolean = boolean> = {
 	nopic: boolean
 	from?: string
 	to?: string
-	output: If<O, string>
+	output: If<O, string, undefined>
 	threads: string | number
 	format?: VideoFormats | AudioFormats
 	/** Ovewrite file */
 	y: boolean
+	/** Force output directory creation */
+	forceDir: boolean
 	/** Open file when finished */
-	open: boolean,
+	open: boolean
 	resolution?: `${number}p`
 }
 
