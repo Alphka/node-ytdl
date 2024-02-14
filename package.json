@@ -1,12 +1,9 @@
 {
 	"author": "Alphka",
 	"name": "node-ytdl",
-	"version": "2.0.1",
+	"version": "3.0.0",
 	"description": "Download and convert YouTube videos using ytdl-core and ffmpeg",
-	"main": "src/index.ts",
-	"scripts": {
-		"start": "ts-node ."
-	},
+	"main": "src/index.js",
 	"devDependencies": {
 		"@types/node": "20.x"
 	},
@@ -17,7 +14,6 @@
 		"commander": "~11.1.0",
 		"dotenv": "~16.3.1",
 		"sharp": "~0.32.6",
-		"ts-node": "~10.9.2",
 		"youtube-search-api": "^1.2.1",
 		"ytdl-core": "^4.11.5"
 	},
@@ -25,7 +21,7 @@
 		"type": "git",
 		"url": "git+https://github.com/Alphka/node-ytdl.git"
 	},
-	"license": "ISC",
+	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/Alphka/node-ytdl/issues"
 	},
