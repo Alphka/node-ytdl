@@ -5,7 +5,7 @@
 		"moduleResolution": "NodeNext",
 		"checkJs": true,
 		"strict": true,
-		"skipLibCheck": false,
+		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"strictPropertyInitialization": false,
 		"lib": [
@@ -20,7 +20,7 @@
 	},
 	"exclude": [
 		"node_modules",
-		"src-copy"
+		"output"
 	],
 	"typeAcquisition": {
 		"enable": true

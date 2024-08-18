@@ -2,7 +2,7 @@
 
 import "@total-typescript/ts-reset"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs"
-import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from "path"
+import { dirname, isAbsolute, join, relative, resolve, sep } from "path"
 import { rm, writeFile, stat } from "fs/promises"
 import { fileURLToPath } from "url"
 import { Command } from "commander"
