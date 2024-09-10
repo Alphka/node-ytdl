@@ -7,7 +7,6 @@ import { rm, writeFile, stat } from "fs/promises"
 import { fileURLToPath } from "url"
 import { Command } from "commander"
 import Downloader from "./Downloader.js"
-import Package from "../package.json" assert { type: "json" }
 import config from "./config.js"
 import chalk from "chalk"
 import os from "os"
@@ -16,6 +15,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const root = join(__dirname, "..")
 const cwd = process.cwd()
+
+const packageInfo = /** @type {import("../package.json")} */ (JSON.parse(readFileSync(join(root, "package.json"), "utf8")))
 
 /**
  * @link https://github.com/Alphka/Instagram-Downloader/commit/5e4df9a4689d15b528c90e1bfec318910a60ca26#diff-bfe9874d239014961b1ae4e89875a6155667db834a410aaaa2ebe3cf89820556R23
@@ -46,9 +47,9 @@ function GetOutputDirectory(directory, force){
 }
 
 const program = new Command()
-	.name(Package.name)
-	.description(Package.description)
-	.version(Package.version, "-v, --version", "Display program version")
+	.name(packageInfo.name)
+	.description(packageInfo.description)
+	.version(packageInfo.version, "-v, --version", "Display program version")
 	.helpOption("-h, --help", "Display help")
 	.argument(config.argument.name, config.argument.description)
 	.action(
@@ -61,7 +62,7 @@ const program = new Command()
 		const argument = program.args.join(" ")
 
 		const osTemp = os.tmpdir()
-		const temp = join(osTemp, Package.name)
+		const temp = join(osTemp, packageInfo.name)
 
 		mkdirSync(temp, { recursive: true })
 
