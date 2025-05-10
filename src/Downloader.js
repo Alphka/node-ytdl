@@ -3,23 +3,23 @@ import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
 import { extname, join, parse } from "path"
 import { createInterface } from "readline"
 import { spawn, exec } from "child_process"
-import { Command } from "commander"
 import GetFFmpegPath from "./helpers/GetFFmpegPath.js"
 import GetThreads from "./helpers/GetThreads.js"
 import ytsearch from "youtube-search-api"
-import ytdl from "ytdl-core"
+import ytdl from "@distube/ytdl-core"
 import axios from "axios"
 import sharp from "sharp"
 
 // TODO: Handle fs promises, report error but continue the program ... add the errors to the executor (if failed to delete a file, try to delete it later)
+// TODO: Search song details (if the video is a song) in other platforms (like Spotify) or API
 
-/** @param {import("ytdl-core").videoFormat[]} formats */
+/** @param {import("@distube/ytdl-core").videoFormat[]} formats */
 function GetVideoFormats(formats){
 	const videoFormats = /** @type {import("../typings/formats.js").VideoFormat[]} */ (formats.filter(({ hasVideo }) => hasVideo))
 	return videoFormats.sort((a, b) => b.width - a.width)
 }
 
-/** @param {import("ytdl-core").videoFormat[]} formats */
+/** @param {import("@distube/ytdl-core").videoFormat[]} formats */
 function GetAudioFormat(formats){
 	const audioFormats = /** @type {import("../typings/formats.js").AudioFormat[]} */ (formats.filter(({ hasAudio }) => hasAudio))
 	return audioFormats.sort((a, b) => b.audioBitrate - a.audioBitrate)[0]
@@ -49,7 +49,7 @@ export default class Downloader {
 	/**
 	 * @param {string} argument
 	 * @param {Options<true>} options
-	 * @param {Command} program
+	 * @param {import("commander").Command} program
 	 */
 	constructor(argument, options, program){
 		this.argument = argument
@@ -107,14 +107,14 @@ export default class Downloader {
 			switch(format){
 				case "mp3":
 					audio.extension = ".mp3"
-				break
+					break
 				case "aac":
 					audio.extension = ".m4a"
-				break
+					break
 				case "opus":
 					audio.extension = ".opus"
 					options.nopic = true
-				break
+					break
 			}
 
 			audio.format = format
@@ -148,7 +148,7 @@ export default class Downloader {
 		} = this
 
 		const finalFolder = output === tempOutput ? join(output, "..") : output
-		const basename = title.replace(/[<>:"\/\\\|\?\*]+/g, "_")
+		const basename = title.replace(/[<>:"/\\|?*]+/g, "_")
 
 		try{
 			await this.AnalyseFinalFolder(finalFolder, basename)
@@ -275,9 +275,9 @@ export default class Downloader {
 	 * @param {string} title
 	 */
 	GetArtist(title, owner){
-		const name = /^[\w ]+ - [\w\W]+$/.test(title)
+		const name = /^[\w ]+ - [\s\S]+$/.test(title)
 			? title.split("-")[0]
-			: /^[\w ]+ "\w+" [\w\W]+$/.test(title)
+			: /^[\w ]+ "\w+" [\s\S]+$/.test(title)
 				? title.split('"')[0]
 				: owner.endsWith(" - Topic")
 					? owner.substring(0, owner.lastIndexOf(" - Topic"))
@@ -333,16 +333,16 @@ export default class Downloader {
 				windowsHide: true,
 				stdio: "inherit"
 			})
-			.on("close", async () => {
+				.on("close", async () => {
 				// TODO: Ignore
-				await Promise.allSettled([
-					rm(imagePath),
-					rename(audioTempPath, audioPath)
-				])
+					await Promise.allSettled([
+						rm(imagePath),
+						rename(audioTempPath, audioPath)
+					])
 
-				resolve()
-			})
-			.on("error", program.error)
+					resolve()
+				})
+				.on("error", program.error)
 		})
 	}
 	/** @returns {Promise<string>} */
@@ -430,7 +430,7 @@ export default class Downloader {
 					const resolutionFormat = videoFormats.find(({ qualityLabel }) => CompareResolutions(qualityLabel, resolution))
 
 					if(resolutionFormat) return resolutionFormat
-					else console.log("Resolution '%s' not found", resolution)
+					console.log("Resolution '%s' not found", resolution)
 				}
 
 				return videoFormat

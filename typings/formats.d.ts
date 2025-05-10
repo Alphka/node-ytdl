@@ -1,4 +1,4 @@
-import type { videoFormat } from "ytdl-core"
+import type { videoFormat } from "@distube/ytdl-core"
 
 type VideoFormat = videoFormat & {
 	mimeType: string

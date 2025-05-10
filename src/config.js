@@ -41,8 +41,20 @@ const config = {
 			option: "format",
 			alternative: "f",
 			description: "Output format",
-			syntax: '[mp4 | webm | mp3 | aac | opus]'
+			syntax: "[mp4 | webm | mp3 | aac | opus]"
 		},
+		/* {
+			option: "start",
+			alternative: "s",
+			description: "Output's start position",
+			syntax: "[timestamp]"
+		},
+		{
+			option: "end",
+			alternative: "e",
+			description: "Output's end position",
+			syntax: "[timestamp]"
+		}, */
 		{
 			option: "output",
 			alternative: "o",

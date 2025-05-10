@@ -1,4 +1,4 @@
-import { join, extname, parse, resolve } from "path"
+import { join, extname, parse } from "path"
 import { existsSync, readdirSync } from "fs"
 import InstallFFmpeg from "./InstallFFmpeg.js"
 
@@ -16,7 +16,7 @@ export default async function GetFFmpegPath(){
 				.filter(file => file.isFile() && extname(file.name).length > 1)
 				.map(file => join(directory, file.name))
 
-			for(const file of files) if(parse(file).name === "ffmpeg") return file
+			for(const file of files)if(parse(file).name === "ffmpeg") return file
 		}
 	}
 

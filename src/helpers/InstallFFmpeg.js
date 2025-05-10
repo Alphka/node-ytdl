@@ -22,8 +22,8 @@ export default async function InstallFFmpeg(){
 				stdio: "ignore",
 				cwd: root
 			})
-			.on("close", () => resolve())
-			.on("error", reject)
+				.on("close", () => resolve())
+				.on("error", reject)
 		})
 	}
 }
