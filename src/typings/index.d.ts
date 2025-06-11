@@ -14,7 +14,7 @@ type Options<O extends boolean = boolean> = {
 	output: If<O, string, undefined>
 	threads: string | number
 	format?: VideoFormats | AudioFormats
-	/** Ovewrite file */
+	/** Overwrite file */
 	y: boolean
 	/** Force output directory creation */
 	forceDir: boolean

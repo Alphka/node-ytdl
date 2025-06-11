@@ -4,7 +4,7 @@ interface Thumbnail {
 	height: number
 }
 
-type browseId = `${string}-${string}`
+type BrowseId = `${string}-${string}`
 
 interface Runs {
 	text: string
@@ -12,15 +12,15 @@ interface Runs {
 		clickTrackingParams: string
 		commandMetadata: {
 			webCommandMetadata: {
-				url: `/channel/${browseId}`
+				url: `/channel/${BrowseId}`
 				webPageType: "WEB_PAGE_TYPE_CHANNEL"
 				rootVe: number
 				apiUrl: "/youtubei/v1/browse"
 			}
-		},
+		}
 		browseEndpoint: {
-			browseId: browseId
-			canonicalBaseUrl: `/channel/${browseId}`
+			browseId: BrowseId
+			canonicalBaseUrl: `/channel/${BrowseId}`
 		}
 	}
 }
@@ -89,13 +89,13 @@ declare module "youtube-search-api" {
 					configInfo: {
 						appInstallData: string
 					}
-				},
+				}
 				user: {
 					lockedSafetyMode: boolean
-				},
+				}
 				request: {
 					useSsl: boolean
-				},
+				}
 				clickTracking: {
 					clickTrackingParams: string
 				}

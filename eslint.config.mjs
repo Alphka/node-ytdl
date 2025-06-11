@@ -1,11 +1,13 @@
 import { fileURLToPath } from "url"
 import { FlatCompat } from "@eslint/eslintrc"
 import { dirname } from "path"
+import typescriptPlugin from "@typescript-eslint/eslint-plugin"
 import unusedImports from "eslint-plugin-unused-imports"
 import regexpPlugin from "eslint-plugin-regexp"
 import stylistic from "@stylistic/eslint-plugin"
 import nPlugin from "eslint-plugin-n"
 import globals from "globals"
+import sonar from "eslint-plugin-sonarjs"
 import js from "@eslint/js"
 
 const compat = new FlatCompat({
@@ -19,8 +21,10 @@ const eslintConfig = [
 	{
 		plugins: {
 			js,
+			sonar,
 			"@stylistic": stylistic,
-			"unused-imports": unusedImports
+			"unused-imports": unusedImports,
+			"@typescript-eslint": typescriptPlugin
 		},
 		languageOptions: {
 			ecmaVersion: 2022,
@@ -31,21 +35,18 @@ const eslintConfig = [
 		}
 	},
 	...compat.config({
+		extends: [
+			"plugin:@typescript-eslint/recommended"
+		],
 		ignorePatterns: [
 			"node_modules",
 			".vscode",
-			"output",
-			"tests/*/*.js",
-			"test*.js"
+			"output"
 		],
-		settings: {
-			next: {
-				rootDir: "."
-			}
-		},
 		rules: {
 			"array-bracket-spacing": ["error", "never"],
 			"array-callback-return": "error",
+			"arrow-spacing": "off",
 			"comma-dangle": ["error", "never"],
 			"constructor-super": "error",
 			"dot-notation": "error",
@@ -87,10 +88,12 @@ const eslintConfig = [
 			"no-class-assign": "error",
 			"no-compare-neg-zero": "error",
 			"no-cond-assign": "error",
-			"no-console": "off",
+			"no-console": "off", /* ["error", {
+				allow: ["warn", "error"]
+			}], */
 			"no-const-assign": "error",
 			"no-constant-binary-expression": "error",
-			"no-constant-condition": "off",
+			"no-constant-condition": "error",
 			"no-control-regex": "error",
 			"no-debugger": "error",
 			"no-delete-var": "error",
@@ -148,6 +151,7 @@ const eslintConfig = [
 			"no-unsafe-optional-chaining": "error",
 			"no-unused-labels": "error",
 			"no-unused-private-class-members": "error",
+			"no-unused-vars": "off",
 			"no-use-before-define": ["error", "nofunc"],
 			"no-useless-backreference": "error",
 			"no-useless-catch": "error",
@@ -160,7 +164,6 @@ const eslintConfig = [
 			"one-var": ["error", "never"],
 			"operator-assignment": "error",
 			"prefer-arrow-callback": "off",
-			"prefer-const": "error",
 			"prefer-object-spread": "error",
 			"prefer-regex-literals": "error",
 			"prefer-rest-params": "error",
@@ -178,6 +181,7 @@ const eslintConfig = [
 			}],
 			"use-isnan": "error",
 			"valid-typeof": "error",
+			"space-infix-ops": "off",
 
 			"@next/next/no-html-link-for-pages": "off",
 
@@ -190,7 +194,25 @@ const eslintConfig = [
 			"regexp/prefer-d": "off",
 			"regexp/use-ignore-case": "off",
 
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/interface-name-prefix": "off",
+			"@typescript-eslint/explicit-function-return-type": "off",
+			"@typescript-eslint/explicit-module-boundary-types": "off",
+			"@typescript-eslint/ban-ts-comment": "off",
+			"@typescript-eslint/no-empty-object-type": "off",
+			"@typescript-eslint/no-unused-vars": "off",
+			"@typescript-eslint/no-unused-expressions": "off",
+			"@typescript-eslint/no-duplicate-enum-values": "off",
+			"@typescript-eslint/no-unnecessary-type-constraint": "off",
+			"@typescript-eslint/consistent-type-imports": ["error", {
+				disallowTypeAnnotations: false
+			}],
+
 			"@stylistic/arrow-parens": ["error", "as-needed"],
+			"@stylistic/arrow-spacing": ["error", {
+				before: true,
+				after: true
+			}],
 			"@stylistic/indent": ["error", "tab", {
 				SwitchCase: 1,
 				VariableDeclarator: 0
@@ -235,6 +257,25 @@ const eslintConfig = [
 			}],
 			"@stylistic/quote-props": ["error", "as-needed"],
 			"@stylistic/type-annotation-spacing": "error",
+			"@stylistic/space-infix-ops": "error",
+
+			"@stylistic/comma-spacing": ["error", {
+				before: false,
+				after: true
+			}],
+			"@stylistic/space-before-function-paren": ["error", {
+				anonymous: "never",
+				named: "never",
+				asyncArrow: "always"
+			}],
+			"@stylistic/semi-spacing": ["error", {
+				before: false,
+				after: true
+			}],
+			"@stylistic/space-unary-ops": ["error", {
+				words: true,
+				nonwords: false
+			}],
 
 			"unused-imports/no-unused-imports": "error",
 			"unused-imports/no-unused-vars": ["error", {

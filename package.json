@@ -5,28 +5,33 @@
 	"description": "Download and convert YouTube videos using @distube/ytdl-core and ffmpeg",
 	"main": "src/index.js",
 	"scripts": {
-		"lint": "tsc -p jsconfig.json"
+		"lint": "eslint .",
+		"lint:tsc": "tsc -p jsconfig.json"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.1",
-		"@eslint/js": "^9.26.0",
-		"@stylistic/eslint-plugin": "^4.2.0",
-		"@types/node": "^22.15.17",
-		"eslint-plugin-n": "^17.18.0",
-		"eslint-plugin-regexp": "^2.7.0",
+		"@eslint/js": "^9.28.0",
+		"@stylistic/eslint-plugin": "^4.4.1",
+		"@types/node": "^24.0.0",
+		"@types/which": "^3.0.4",
+		"@typescript-eslint/eslint-plugin": "^8.34.0",
+		"eslint-plugin-n": "^17.19.0",
+		"eslint-plugin-regexp": "^2.9.0",
+		"eslint-plugin-sonarjs": "^3.0.2",
 		"eslint-plugin-unused-imports": "^4.1.4",
-		"globals": "^16.1.0",
+		"globals": "^16.2.0",
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"@distube/ytdl-core": "^4.16.10",
+		"@distube/ytdl-core": "^4.16.11",
 		"@total-typescript/ts-reset": "^0.6.1",
 		"axios": "^1.9.0",
 		"chalk": "^5.4.1",
 		"commander": "^12.1.0",
 		"dotenv": "^16.5.0",
-		"sharp": "^0.34.1",
-		"youtube-search-api": "^1.2.2"
+		"sharp": "^0.34.2",
+		"which": "^5.0.0",
+		"youtube-search-api": "^2.0.0"
 	},
 	"repository": {
 		"type": "git",

@@ -3,21 +3,23 @@
 		"target": "ESNext",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
+		"resolveJsonModule": true,
 		"checkJs": true,
 		"strict": true,
 		"skipLibCheck": true,
-		"resolveJsonModule": true,
+		"strictNullChecks": false,
 		"strictPropertyInitialization": false,
-		"lib": [
-			"ESNext"
-		],
+		"lib": ["ESNext"],
 		"typeRoots": [
-			"./node_modules/@types",
-			"./typings"
+			"node_modules/@types",
+			"src/typings"
 		],
-		"noEmit": true,
-		"sourceMap": true
+		"noEmit": true
 	},
+	"include": [
+		"src",
+		"eslint.config.mjs"
+	],
 	"exclude": [
 		"node_modules",
 		"output"

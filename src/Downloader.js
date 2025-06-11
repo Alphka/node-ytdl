@@ -1,27 +1,27 @@
 import { createWriteStream, existsSync, readdirSync } from "fs"
 import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
-import { extname, join, parse } from "path"
 import { createInterface } from "readline"
+import { join, parse } from "path"
 import { spawn, exec } from "child_process"
-import GetFFmpegPath from "./helpers/GetFFmpegPath.js"
 import GetThreads from "./helpers/GetThreads.js"
 import ytsearch from "youtube-search-api"
 import ytdl from "@distube/ytdl-core"
 import axios from "axios"
 import sharp from "sharp"
+import which from "which"
 
 // TODO: Handle fs promises, report error but continue the program ... add the errors to the executor (if failed to delete a file, try to delete it later)
 // TODO: Search song details (if the video is a song) in other platforms (like Spotify) or API
 
 /** @param {import("@distube/ytdl-core").videoFormat[]} formats */
 function GetVideoFormats(formats){
-	const videoFormats = /** @type {import("../typings/formats.js").VideoFormat[]} */ (formats.filter(({ hasVideo }) => hasVideo))
+	const videoFormats = /** @type {import("./typings/formats.js").VideoFormat[]} */ (formats.filter(({ hasVideo }) => hasVideo))
 	return videoFormats.sort((a, b) => b.width - a.width)
 }
 
 /** @param {import("@distube/ytdl-core").videoFormat[]} formats */
 function GetAudioFormat(formats){
-	const audioFormats = /** @type {import("../typings/formats.js").AudioFormat[]} */ (formats.filter(({ hasAudio }) => hasAudio))
+	const audioFormats = /** @type {import("./typings/formats.js").AudioFormat[]} */ (formats.filter(({ hasAudio }) => hasAudio))
 	return audioFormats.sort((a, b) => b.audioBitrate - a.audioBitrate)[0]
 }
 
@@ -135,7 +135,11 @@ export default class Downloader {
 		}
 	}
 	async Init(){
-		const ffmpegInstallation = GetFFmpegPath().then(path => this.ffmpegPath = path)
+		try{
+			this.ffmpegPath = await which("ffmpeg", { all: false })
+		}catch{
+			console.error("ffmpeg executable was not found")
+		}
 
 		this.videoId = await this.GetVideoId()
 		this.details = await this.GetVideoDetails(this.videoId)
@@ -151,7 +155,7 @@ export default class Downloader {
 		const basename = title.replace(/[<>:"/\\|?*]+/g, "_")
 
 		try{
-			await this.AnalyseFinalFolder(finalFolder, basename)
+			await this.AnalyzeFinalFolder(finalFolder, basename)
 		}catch(error){
 			if(error) throw error
 			process.exitCode = 1
@@ -166,19 +170,18 @@ export default class Downloader {
 			"-metadata", `comment=${video_url}`
 		]
 
-		await ffmpegInstallation
-
-		if(isVideo) return await Promise.all([
-			this.DownloadVideo(),
-			hasAudio && this.DownloadAudio()
-		]).then(([videoPath, audioPath]) => {
+		if(isVideo){
 			const { config: { extension }, threads, ffmpegPath } = this
+
+			const [videoPath, audioPath] = await Promise.all([
+				this.DownloadVideo(),
+				hasAudio && this.DownloadAudio()
+			])
+
 			const filename = basename + extension
 			const finalPath = join(finalFolder, filename)
 			const tempPath = join(tempOutput, filename)
-			const ffmpegAttributes = /** @type {string[]} */ ([])
-
-			ffmpegAttributes.push("-i", videoPath)
+			const ffmpegAttributes = /** @type {string[]} */ (["-i", videoPath])
 
 			if(audioPath){
 				ffmpegAttributes.push(
@@ -187,31 +190,30 @@ export default class Downloader {
 				)
 			}else ffmpegAttributes.push("-an")
 
-			if(extname(videoPath) === ".mkv") ffmpegAttributes.push(
-				"-c:v", "libx264",
-				"-preset:v", "ultrafast",
-				"-threads", threads.toString()
-			)
-			else ffmpegAttributes.push("-c:v", "copy")
-
 			spawn(ffmpegPath, [
 				"-loglevel", "8",
 				...ffmpegAttributes,
 				...metadata,
+				"-c:v", "copy",
+				"-movflags", "+faststart",
+				"-threads", threads.toString(),
 				tempPath
 			], {
 				windowsHide: true,
 				stdio: "inherit"
-			}).on("exit", async () => {
-				// TODO: Ignore
+			}).on("close", async () => {
 				await Promise.all([
-					audioPath && rm(audioPath, { recursive: true }),
-					rm(videoPath, { recursive: true })
+					audioPath && rm(audioPath, { force: true }),
+					rm(videoPath, { force: true })
 				])
 
-				this.MoveAndOpenFinalPath(tempPath, finalPath)
+				if(existsSync(tempPath)){
+					this.MoveAndOpenFinalPath(tempPath, finalPath)
+				}
 			}).on("error", command.error)
-		})
+
+			return
+		}
 
 		const audioPath = await this.DownloadAudio()
 		const { config: { extension }, ffmpegPath } = this
@@ -220,7 +222,12 @@ export default class Downloader {
 
 		if(hasImage){
 			await this.DownloadImage(audioPath, metadata)
-			return this.MoveAndOpenFinalPath(audioPath, finalPath)
+
+			if(existsSync(audioPath)){
+				this.MoveAndOpenFinalPath(audioPath, finalPath)
+			}
+
+			return
 		}
 
 		const tempPath = join(tempOutput, filename)
@@ -228,13 +235,16 @@ export default class Downloader {
 		spawn(ffmpegPath, [
 			"-i", audioPath,
 			"-c:a", "copy",
+			"-movflags", "+faststart",
 			"-vn",
 			...metadata,
 			tempPath
 		]).on("close", async () => {
-			// TODO: Ignore
-			await rm(audioPath, { recursive: true })
-			this.MoveAndOpenFinalPath(tempPath, finalPath)
+			await rm(audioPath, { force: true })
+
+			if(existsSync(tempPath)){
+				this.MoveAndOpenFinalPath(tempPath, finalPath)
+			}
 		}).on("error", command.error)
 	}
 	async GetVideoId(){
@@ -308,7 +318,7 @@ export default class Downloader {
 		await writeFile(imagePath, await sharp(response.data).toFormat("png").toBuffer())
 
 		return new Promise(resolve => {
-			const { config: { audio: { format } }, ffmpegPath }= this
+			const { config: { audio: { format } }, ffmpegPath } = this
 			const audioTempPath = audioPath.replace(/\.(?=\w+$)/, ".temp.")
 			const extraAttributes = /** @type {string[]} */ ([])
 
@@ -445,9 +455,10 @@ export default class Downloader {
 			const ffmpegProcess = spawn(ffmpegPath, [
 				"-loglevel", "8",
 				"-i", "pipe:3",
+				"-crf", "18",
 				"-c:v", "libx264",
-				"-preset:v", "ultrafast",
 				"-b:v", videoFormat.bitrate.toString(),
+				"-preset:v", "slow",
 				"-threads", threads.toString(),
 				"-f", "matroska",
 				"-an",
@@ -515,8 +526,11 @@ export default class Downloader {
 	 * @param {string} folder
 	 * @param {string} name
 	 */
-	async AnalyseFinalFolder(folder, name){
-		const files = readdirSync(folder, { withFileTypes: true }).filter(file => file.isFile()).map(file => file.name)
+	async AnalyzeFinalFolder(folder, name){
+		const files = readdirSync(folder, { withFileTypes: true })
+			.filter(file => file.isFile())
+			.map(file => file.name)
+
 		const filesSameBase = files.filter(file => parse(file).name === name)
 
 		if(filesSameBase.length){

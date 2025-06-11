@@ -41,3 +41,4 @@ config.json
 /test*.*
 
 .vscode/launch.json
+*.ps1

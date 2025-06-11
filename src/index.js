@@ -1,6 +1,5 @@
-#!/usr/bin/env node --no-warnings
+#!/usr/bin/env node
 
-import "@total-typescript/ts-reset"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs"
 import { dirname, isAbsolute, join, relative, resolve, sep } from "path"
 import { rm, writeFile, stat } from "fs/promises"
@@ -166,7 +165,7 @@ const program = new Command()
 								const { ctimeMs } = await stat(path)
 
 								// If the folder was created in less than 1 hour
-								if((Date.now() - ctimeMs) / 1e3 / 60**2 < 1) return
+								if((Date.now() - ctimeMs) / 1e3 / 60 ** 2 < 1) return
 
 								await rm(path, { recursive: true })
 							}
