@@ -46,6 +46,7 @@
 		"minimatch",
 		"modelcontextprotocol",
 		"movflags",
+		"multilines",
 		"noaudio",
 		"nodelib",
 		"nonconstructor",

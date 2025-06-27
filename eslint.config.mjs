@@ -1,30 +1,23 @@
 import { fileURLToPath } from "url"
 import { FlatCompat } from "@eslint/eslintrc"
 import { dirname } from "path"
-import typescriptPlugin from "@typescript-eslint/eslint-plugin"
 import unusedImports from "eslint-plugin-unused-imports"
-import regexpPlugin from "eslint-plugin-regexp"
 import stylistic from "@stylistic/eslint-plugin"
 import nPlugin from "eslint-plugin-n"
 import globals from "globals"
 import sonar from "eslint-plugin-sonarjs"
-import js from "@eslint/js"
 
 const compat = new FlatCompat({
 	baseDirectory: import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))
 })
 
 const eslintConfig = [
-	js.configs.recommended,
 	nPlugin.configs["flat/recommended-script"],
-	regexpPlugin.configs["flat/recommended"],
 	{
 		plugins: {
-			js,
 			sonar,
 			"@stylistic": stylistic,
-			"unused-imports": unusedImports,
-			"@typescript-eslint": typescriptPlugin
+			"unused-imports": unusedImports
 		},
 		languageOptions: {
 			ecmaVersion: 2022,
@@ -36,6 +29,8 @@ const eslintConfig = [
 	},
 	...compat.config({
 		extends: [
+			"plugin:n/recommended-script",
+			"plugin:regexp/recommended",
 			"plugin:@typescript-eslint/recommended"
 		],
 		ignorePatterns: [
@@ -44,10 +39,10 @@ const eslintConfig = [
 			"output"
 		],
 		rules: {
-			"array-bracket-spacing": ["error", "never"],
+			"array-bracket-spacing": "off",
 			"array-callback-return": "error",
 			"arrow-spacing": "off",
-			"comma-dangle": ["error", "never"],
+			"comma-dangle": "off",
 			"constructor-super": "error",
 			"dot-notation": "error",
 			"eol-last": ["error", "always"],
@@ -58,39 +53,14 @@ const eslintConfig = [
 			"getter-return": "error",
 			"guard-for-in": "error",
 			indent: "off",
-			"keyword-spacing": ["error", {
-				overrides: {
-					if: { before: false, after: false },
-					else: { before: false, after: false },
-					for: { before: false, after: false },
-					while: { before: false, after: false },
-					do: { before: false, after: false },
-					switch: { before: false, after: false },
-					try: { after: false },
-					catch: { before: false, after: false },
-					finally: { before: false, after: false },
-					with: { before: false, after: false },
-					in: { before: true, after: true },
-					of: { before: true, after: true },
-					function: { after: false },
-					import: { after: true },
-					from: { before: true, after: true },
-					export: { after: true },
-					return: { after: true },
-					const: { after: true },
-					let: { after: true },
-					var: { after: true }
-				}
-			}],
+			"keyword-spacing": "off",
 			"linebreak-style": ["warn", "unix"],
 			"no-async-promise-executor": "error",
 			"no-case-declarations": "error",
 			"no-class-assign": "error",
 			"no-compare-neg-zero": "error",
 			"no-cond-assign": "error",
-			"no-console": "off", /* ["error", {
-				allow: ["warn", "error"]
-			}], */
+			"no-console": "off",
 			"no-const-assign": "error",
 			"no-constant-binary-expression": "error",
 			"no-constant-condition": "error",
@@ -134,7 +104,7 @@ const eslintConfig = [
 			"no-obj-calls": "error",
 			"no-octal": "error",
 			"no-prototype-builtins": "error",
-			"no-redeclare": "error",
+			"no-redeclare": "off",
 			"no-regex-spaces": "error",
 			"no-self-assign": "error",
 			"no-setter-return": "error",
@@ -159,7 +129,7 @@ const eslintConfig = [
 			"no-useless-return": "error",
 			"no-var": "error",
 			"no-with": "error",
-			"object-curly-spacing": ["error", "always"],
+			"object-curly-spacing": "off",
 			"object-shorthand": "error",
 			"one-var": ["error", "never"],
 			"operator-assignment": "error",
@@ -171,9 +141,7 @@ const eslintConfig = [
 			"prefer-template": "off",
 			quotes: "off",
 			"require-yield": "error",
-			semi: ["error", "never", {
-				beforeStatementContinuationChars: "always"
-			}],
+			semi: "off",
 			"space-before-blocks": ["error", {
 				functions: "never",
 				keywords: "never",
@@ -208,17 +176,107 @@ const eslintConfig = [
 				disallowTypeAnnotations: false
 			}],
 
+			"@stylistic/array-bracket-spacing": ["error", "never"],
 			"@stylistic/arrow-parens": ["error", "as-needed"],
 			"@stylistic/arrow-spacing": ["error", {
 				before: true,
 				after: true
 			}],
+			"@stylistic/comma-spacing": ["error", {
+				before: false,
+				after: true
+			}],
+			"@stylistic/block-spacing": ["error", "always"],
+			"@stylistic/brace-style": ["error", "1tbs", {
+				allowSingleLine: true
+			}],
+			"@stylistic/comma-dangle": ["error", "never"],
+			"@stylistic/comma-style": ["error", "last"],
+			"@stylistic/computed-property-spacing": ["error", "never"],
+			"@stylistic/curly-newline": ["error", { consistent: true }],
+			"@stylistic/dot-location": ["error", "property"],
+			"@stylistic/eol-last": ["error", "always"],
+			"@stylistic/function-call-argument-newline": "off",
+			"@stylistic/function-call-spacing": ["error", "never"],
+			"@stylistic/generator-star-spacing": ["error", {
+				before: false,
+				after: true
+			}],
+			"@stylistic/implicit-arrow-linebreak": ["error", "beside"],
 			"@stylistic/indent": ["error", "tab", {
 				SwitchCase: 1,
 				VariableDeclarator: 0
 			}],
+			"@stylistic/jsx-child-element-spacing": "error",
+			"@stylistic/jsx-closing-bracket-location": ["error", "line-aligned"],
+			"@stylistic/jsx-closing-tag-location": ["error", "line-aligned"],
+			"@stylistic/jsx-curly-brace-presence": "error",
+			"@stylistic/jsx-curly-spacing": ["error", {
+				when: "never",
+				children: true
+			}],
+			"@stylistic/jsx-equals-spacing": ["error", "never"],
+			"@stylistic/jsx-first-prop-new-line": ["error", "multiline-multiprop"],
+			"@stylistic/jsx-function-call-newline": ["error", "multiline"],
+			"@stylistic/jsx-indent-props": ["error", "tab"],
+			"@stylistic/jsx-max-props-per-line": ["error", {
+				maximum: {
+					single: 5,
+					multi: 1
+				}
+			}],
+			"@stylistic/jsx-pascal-case": ["error", {
+				allowAllCaps: false,
+				allowNamespace: true,
+				allowLeadingUnderscore: false
+			}],
+			"@stylistic/jsx-props-no-multi-spaces": "error",
+			"@stylistic/jsx-self-closing-comp": "error",
+			"@stylistic/jsx-tag-spacing": ["error", {
+				afterOpening: "never",
+				closingSlash: "never",
+				beforeSelfClosing: "proportional-always"
+			}],
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
-			"@stylistic/key-spacing": ["error"],
+			"@stylistic/jsx-wrap-multilines": ["error", {
+				declaration: "parens-new-line",
+				assignment: "parens-new-line",
+				return: "parens-new-line",
+				arrow: "parens-new-line",
+				condition: "parens-new-line",
+				logical: "parens-new-line",
+				prop: "parens-new-line"
+			}],
+			"@stylistic/key-spacing": ["error", {
+				beforeColon: false,
+				afterColon: true,
+				mode: "strict"
+			}],
+			"@stylistic/keyword-spacing": ["error", {
+				overrides: {
+					if: { before: false, after: false },
+					else: { before: false, after: false },
+					for: { before: false, after: false },
+					while: { before: false, after: false },
+					do: { before: false, after: false },
+					switch: { before: false, after: false },
+					try: { after: false },
+					catch: { before: false, after: false },
+					finally: { before: false, after: false },
+					with: { before: false, after: false },
+					in: { before: true, after: true },
+					of: { before: true, after: true },
+					function: { after: false },
+					import: { after: true },
+					from: { before: true, after: true },
+					export: { after: true },
+					return: { after: true },
+					const: { after: true },
+					let: { after: true },
+					var: { after: true }
+				}
+			}],
+			"@stylistic/linebreak-style": ["error", "unix"],
 			"@stylistic/member-delimiter-style": ["error", {
 				multiline: {
 					delimiter: "none",
@@ -229,7 +287,23 @@ const eslintConfig = [
 					requireLast: false
 				}
 			}],
+			"@stylistic/no-mixed-spaces-and-tabs": "error",
+			"@stylistic/no-multi-spaces": "error",
 			"@stylistic/no-trailing-spaces": "error",
+			"@stylistic/no-whitespace-before-property": "error",
+			"@stylistic/object-curly-newline": ["error", {
+				consistent: true
+			}],
+			"@stylistic/object-curly-spacing": ["error", "always"],
+			"@stylistic/operator-linebreak": ["error", "after", {
+				overrides: {
+					"?": "before",
+					":": "before",
+					"|": "before",
+					"&": "before"
+				}
+			}],
+			"@stylistic/padded-blocks": ["error", "never"],
 			"@stylistic/padding-line-between-statements": [
 				"error",
 				{
@@ -251,31 +325,48 @@ const eslintConfig = [
 					]
 				}
 			],
+			"@stylistic/quote-props": ["error", "as-needed"],
 			"@stylistic/quotes": ["error", "double", {
 				avoidEscape: true,
 				allowTemplateLiterals: "avoidEscape"
 			}],
-			"@stylistic/quote-props": ["error", "as-needed"],
-			"@stylistic/type-annotation-spacing": "error",
-			"@stylistic/space-infix-ops": "error",
-
-			"@stylistic/comma-spacing": ["error", {
-				before: false,
-				after: true
-			}],
-			"@stylistic/space-before-function-paren": ["error", {
-				anonymous: "never",
-				named: "never",
-				asyncArrow: "always"
+			"@stylistic/rest-spread-spacing": ["error", "never"],
+			"@stylistic/semi": ["error", "never", {
+				beforeStatementContinuationChars: "always"
 			}],
 			"@stylistic/semi-spacing": ["error", {
 				before: false,
 				after: true
 			}],
+			"@stylistic/semi-style": ["error", "last"],
+			"@stylistic/space-before-blocks": ["error", {
+				functions: "never",
+				keywords: "never",
+				classes: "always",
+				modules: "always"
+			}],
+			"@stylistic/space-before-function-paren": ["error", {
+				anonymous: "never",
+				named: "never",
+				asyncArrow: "always",
+				catch: "never"
+			}],
+			"@stylistic/space-in-parens": ["error", "never"],
+			"@stylistic/space-infix-ops": "error",
 			"@stylistic/space-unary-ops": ["error", {
 				words: true,
 				nonwords: false
 			}],
+			"@stylistic/switch-colon-spacing": ["error", {
+				after: true,
+				before: false
+			}],
+			"@stylistic/template-curly-spacing": ["error", "never"],
+			"@stylistic/template-tag-spacing": ["error", "never"],
+			"@stylistic/type-annotation-spacing": "error",
+			"@stylistic/type-generic-spacing": ["error"],
+			"@stylistic/type-named-tuple-spacing": ["error"],
+			"@stylistic/yield-star-spacing": ["error", "after"],
 
 			"unused-imports/no-unused-imports": "error",
 			"unused-imports/no-unused-vars": ["error", {

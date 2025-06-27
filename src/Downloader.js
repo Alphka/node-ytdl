@@ -1,5 +1,5 @@
+import { rm, writeFile, readFile, mkdir, access, constants, copyFile } from "fs/promises"
 import { createWriteStream, existsSync, readdirSync } from "fs"
-import { rename, rm, writeFile, readFile, mkdir } from "fs/promises"
 import { createInterface } from "readline"
 import { join, parse } from "path"
 import { spawn, exec } from "child_process"
@@ -10,8 +10,14 @@ import axios from "axios"
 import sharp from "sharp"
 import which from "which"
 
-// TODO: Handle fs promises, report error but continue the program ... add the errors to the executor (if failed to delete a file, try to delete it later)
-// TODO: Search song details (if the video is a song) in other platforms (like Spotify) or API
+/** @param {import("fs").PathLike} path */
+async function exists(path){
+	return new Promise(resolve => {
+		access(path, constants.F_OK)
+			.then(() => resolve(true))
+			.catch(() => resolve(false))
+	})
+}
 
 /** @param {import("@distube/ytdl-core").videoFormat[]} formats */
 function GetVideoFormats(formats){
@@ -185,8 +191,7 @@ export default class Downloader {
 
 			if(audioPath){
 				ffmpegAttributes.push(
-					"-i", audioPath,
-					"-c:a", "copy"
+					"-i", audioPath, "-c:a", "copy"
 				)
 			}else ffmpegAttributes.push("-an")
 
@@ -344,10 +349,12 @@ export default class Downloader {
 				stdio: "inherit"
 			})
 				.on("close", async () => {
-				// TODO: Ignore
 					await Promise.allSettled([
-						rm(imagePath),
-						rename(audioTempPath, audioPath)
+						rm(imagePath, { force: true }),
+						exists(audioTempPath).then(async () => {
+							await copyFile(audioTempPath, audioPath)
+							await rm(audioTempPath)
+						})
 					])
 
 					resolve()
@@ -494,7 +501,9 @@ export default class Downloader {
 
 		if(tempPath !== finalPath){
 			try{
-				await rename(tempPath, finalPath)
+				await copyFile(tempPath, finalPath)
+				await rm(tempPath)
+
 				OpenFile(finalPath)
 			}catch(error){
 				console.error(error)
